@@ -1,0 +1,18 @@
+# OS generated files #
+######################
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# Logs and databases #
+######################
+*.log
+*.sql
+*.sqlite
+
+# Output Folders #
+##################
+tmp/**/*
+rdoc/**/*
+pkg/**/*

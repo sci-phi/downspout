@@ -1,0 +1,89 @@
+= Downspout
+
+Downspout is an easy-to-use ruby library for downloading files from URLs, supporting both HTTP & FTP protocols. 
+
+= Examples
+== HTTP
+
+=== Fetch files with ease :
+
+The 'fetch_url' method accepts an URL and on a successful download returns an Downloader object. that includes the path method to the resulting temporary file.
+
+  some_url = "http://www-host.domain.tld/folder/some_image_file.gif"
+
+  dl = Downspout.fetch_url( some_url )
+
+  dl.path
+  => "/tmp/downloads/downspout-20110203-59488-1run8k2-0/some_image_file.gif"
+
+=== Download to a Specified Path
+
+By default, Downspout stores the download in an automatically generated temp file, but you can also specify the path you wish the file to go to :
+
+  some_url = "http://www-host.domain.tld/folder/hipster_hacker.png"
+
+  some_path = "/my/custom/downloads/folder/my_hero.png"
+
+  Downspout.download_url_to_path( some_url, some_path )
+
+  => "/my/custom/downloads/folder/my_hero.png"
+
+  Of course, you are responsible for ensuring the specified path is usable!
+
+== FTP
+
+Downspout also supports FTP, but that usually requires authorization, so you should do a small amount of configuration, to map URLs by host.
+
+  Downspout::Config.add_credential( :host => "ftp-host.domain.tld",
+    :user_name => "luser",
+    :pass_word => "pAzw0rd",
+    :scheme => 'ftp'
+    )
+              
+  dl = Downspout.fetch_url("ftp://ftp-host.domain.tld/folder/path/archive.zip")
+
+  dl.path  
+  => "/tmp/downloads/downspout-20110203-59843-109cmu0-7/archive.zip"
+
+Downspout will now attempt to create a credential on the fly, in the case where user info is embedded in the FTP URL, as in :
+
+  dl = Downspout.fetch_url("ftp://account:s3cr3t@ftp-host.domain.tld/file.zip")
+
+  dl.path
+  => "/tmp/downloads/downspout-20110203-62579-109cmu0-7/file.zip"
+
+The main advantage of setting up credentials is to avoid repeatedly communicating the secret information from system to system, especially permitting the download system to receive secure URLs via service calls or text files.
+
+*Caveat* : Credentials are only stored in-memory at this time, so should be defined via application initializers. One strategy is to use an obfuscated yaml file for the sensitive info.
+
+== Storage and Clean-up
+
+By default, files are stored in a "downloads" directory under "/tmp" but this can (and should) be changed via Config :
+
+
+  Downspout::Config.tmp_dir = "/home/luser/downloads/"
+  
+You should clean up this folder periodically, by calling 
+
+  Downspout.clean_download_dir( minutes )
+
+which takes an integer for how many minutes old a file should be in order to be removed. The default is 30. The adequate delay for your application depends on the volume of downloads and your disk capacity.
+
+
+== Contributing to downspout
+ 
+* Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
+* Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it
+* Fork the project
+* Start a feature/bugfix branch
+* Commit and push until you are happy with your contribution
+* Make sure to add tests for it. This is important so I don't break it in a future version unintentionally.
+* Please try not to mess with the Rakefile, version, or history. If you want to have your own version, or is otherwise necessary, that is fine, but please isolate to its own commit so I can cherry-pick around it.
+
+== Copyright
+
+Copyright (c) 2011 Phi.Sanders. See LICENSE.txt for further details.
+
+== Thanks
+
+Thanks to my employer, VitalSource Technologies (http://www.vitalsource.com), for permission to release as open source.
