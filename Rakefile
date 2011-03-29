@@ -12,8 +12,8 @@ Jeweler::Tasks.new do |gem|
   gem.name = "downspout"
   gem.homepage = "http://github.com/sci-phi/downspout"
   gem.license = "MIT"
-  gem.summary = %Q{Downspout is an easy-to-use library for downloading files from given URLs.}
-  gem.description = %Q{Downspout is an easy-to-use library for downloading files from given URLs. HTTP downloads can use either Net::HTTP, or libcurl (via the Curb gem)}
+  gem.summary = %Q{Downspout is an easy-to-use ruby library for downloading files from URLs.}
+  gem.description = %Q{Downspout is an easy-to-use ruby library for downloading files from URLs, supporting both HTTP & FTP protocols. HTTP downloads can use either Net::HTTP, or libcurl (via the Curb gem)}
   gem.email = "phi.sanders@sciphi.me"
   gem.authors = ["Phi.Sanders"]
   gem.files = FileList['lib/**/*.rb', '[A-Z]*', 'test/**/*'].to_a
