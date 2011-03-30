@@ -326,7 +326,7 @@ module Downspout
         disposition = @response_headers[cd_key]
         if disposition then
           # example : Content-Disposition: attachment; filename="iPad_User_Guide.pdf"
-          file_name = disposition.match("filename=\"?(.+)\"?")[1]
+          file_name = disposition.match("filename=\"?([^\"]+)\"?")[1]
         end
       end
 

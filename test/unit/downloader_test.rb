@@ -227,9 +227,15 @@ class DownloaderTest < Test::Unit::TestCase
       assert the_key
     end
     
-    should "extract the appropriate file name" do
+    should "extract the expected file name" do
       assert_equal "0123456789_X.pdf", @dlx.send("generate_file_name")
     end
+
+    should "extract the expected file name (even when quoted)" do
+      @dlx.response_headers["Content-Disposition"].gsub!("0123456789_X.pdf", "\"0123456789_X.pdf\"")
+      assert_equal "0123456789_X.pdf", @dlx.send("generate_file_name")
+    end
+
   end
 
 end
