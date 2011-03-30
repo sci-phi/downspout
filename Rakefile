@@ -51,3 +51,18 @@ Rake::TestTask.new(:test) do |test|
 end
 
 task :default => :test
+
+namespace :basic do
+  desc "Basic Steps to take when updating this gem via GemCutter"
+  task :steps do
+    puts "rake version:bump:patch"
+    puts "rake gemspec"
+    puts ">>> write code <<<"
+    puts "rake test"
+    puts "rake build"
+    puts "gem install pkg/downspout-{version}.gem"
+    puts ">>> manual tests <<<"
+    puts "git commit"
+    puts "gem push pkg/downspout-{version}.gem"
+  end
+end

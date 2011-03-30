@@ -52,7 +52,7 @@ module Downspout
     end
 
     def self.use_curb?
-      @@curb_enabled
+      @@curb_enabled unless !(self.curb_available?)
     end
 
     def self.enable_curb!

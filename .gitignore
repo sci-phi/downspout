@@ -13,6 +13,8 @@ Thumbs.db
 
 # Output Folders #
 ##################
+tmp/*
 tmp/**/*
-rdoc/**/*
 pkg/*
+rdoc/*
+rdoc/**/*

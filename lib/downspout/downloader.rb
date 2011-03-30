@@ -131,16 +131,14 @@ module Downspout
 
       $logger.debug("downspout | downloader | download! | #{self.basename} downloaded? : #{downloaded} ")
       @finished_at = Time.now
-      
-      if (tf && @basename == 'file.downspout') then
+
+      new_name = generate_file_name      
+      if (tf && new_name && !(@basename == new_name)) then
         # rename file more appropriately
-        new_name = generate_file_name
-        if !(new_name.nil?) then
-          $logger.debug("downspout | downloader | download! | Renaming #{@basename} to #{new_name} ...")
-          new_path = File.join( File.dirname( tf.path ), new_name)
-          FileUtils.mv( tf.path, new_path )
-          @path = new_path
-        end
+        $logger.debug("downspout | downloader | download! | Renaming #{@basename} to #{new_name} ...")
+        new_path = File.join( File.dirname( tf.path ), new_name)
+        FileUtils.mv( tf.path, new_path )
+        @path = new_path
       end
 
       $logger.debug("downspout | downloader | download! | Started: #{@started_at.utc}, Finished: #{@finished_at.utc}, Duration: #{duration}")
@@ -328,17 +326,30 @@ module Downspout
     end
 
     def generate_file_name
-      file_type = @response_headers['Content-Type'] if use_curb?
-      file_type = @response_headers['Content-Type'] if use_net_http?
+
+      cd_key = response_headers.keys.select{|k| k =~ /content-disposition/i }.first
+      # example : Content-Disposition: attachment; filename="iPad_User_Guide.pdf"
+      if cd_key then
+        disposition = @response_headers[cd_key]
+        if disposition then
+          file_name = disposition.match("filename=\"(.+)\"")[1]
+          return file_name unless (file_name.nil? || file_name.empty?)
+        end
+      end
+
+      ct_key = response_headers.keys.select{|k| k =~ /content-type/i }.first
+      return nil unless ct_key
+
+      file_type = @response_headers[ct_key]
       return nil unless file_type
 
-      return "default.html" if file_type =~ /text\/html/
       # TODO : smarter file name generation
+      return "#{@basename || 'default'}.html" if file_type =~ /html/
+      return "#{@basename || 'default'}.pdf" if file_type =~ /pdf/
 
       return nil
     end
     
   end
-
   
 end
