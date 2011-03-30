@@ -24,6 +24,12 @@ class ConfigTest < Test::Unit::TestCase
         assert Downspout::Config.respond_to?("disable_networking!")
       end
 
+      should "allow setting Default Prefix" do
+        assert_equal "downspout", Downspout::Config.default_prefix
+        Downspout::Config.default_prefix = "fu-manchu"
+        assert_equal "fu-manchu", Downspout::Config.default_prefix
+      end
+
       should "support disabling network operations" do
         assert Downspout::Config.network_enabled?
         assert Downspout::Config.disable_networking!

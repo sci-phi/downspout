@@ -7,6 +7,7 @@ module Downspout
     @@credentials = []
     @@curb_allowed = true
     @@curb_enabled = true
+    @@prefix = 'downspout'
 
     def self.tmp_dir
       return @@tmp_dir
@@ -14,6 +15,14 @@ module Downspout
 
     def self.tmp_dir=( some_path )
       @@tmp_dir = some_path
+    end
+
+    def self.default_prefix
+      @@prefix
+    end
+
+    def self.default_prefix=( name )
+      @@prefix = name
     end
 
     def self.credentials

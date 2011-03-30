@@ -18,8 +18,10 @@ Jeweler::Tasks.new do |gem|
   gem.authors = ["Phi.Sanders"]
   gem.files = FileList['lib/**/*.rb', '[A-Z]*', 'test/**/*'].to_a
   gem.add_development_dependency "jeweler", "~> 1.5.2"
-  gem.add_development_dependency "shoulda", ">= 0"
-  gem.add_development_dependency "rcov", ">= 0"
+  gem.add_development_dependency "rcov", ">= 0.9.9"
+  gem.add_development_dependency "shoulda", ">= 2.11.3"
+  gem.add_development_dependency "mocha", ">= 0.9.12"
+  gem.add_development_dependency "curb", ">= 0.7.15"
 end
 Jeweler::RubygemsDotOrgTasks.new
 

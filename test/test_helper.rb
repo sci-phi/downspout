@@ -9,6 +9,15 @@ rescue LoadError
   # nice to have, aesthetic, not functional
 end
 
+begin
+  require 'curb'
+rescue LoadError => e
+  puts ""
+  puts "The Curb library is required for development & testing"
+  puts ""
+  raise e
+end
+
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 

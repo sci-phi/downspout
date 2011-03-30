@@ -20,7 +20,7 @@ module Downspout
       # make sure the configured directory exists
       FileUtils.mkdir_p( Downspout::Config.tmp_dir )
 
-      defaults = {:prefix => 'downspout', :name => "downloaded_file.tmp"}
+      defaults = {:prefix => Downspout::Config.default_prefix, :name => "downloaded_file.tmp"}
 
       # overwrite defaults with given options
       defaults.merge!( options ) unless options.nil?

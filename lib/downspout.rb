@@ -6,9 +6,6 @@ require 'uri'
 require 'net/http'
 require 'net/ftp'
 
-# unusual dependencies
-require 'curb'
-
 # add this directory to the path...
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
