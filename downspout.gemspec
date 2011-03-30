@@ -5,12 +5,12 @@
 
 Gem::Specification.new do |s|
   s.name = %q{downspout}
-  s.version = "0.1.0"
+  s.version = "0.2.3"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Phi.Sanders"]
-  s.date = %q{2011-02-17}
-  s.description = %q{Downspout is an easy-to-use library for downloading files from given URLs. HTTP downloads can use either Net::HTTP, or libcurl (via the Curb gem)}
+  s.date = %q{2011-03-30}
+  s.description = %q{Downspout is an easy-to-use ruby library for downloading files from URLs, supporting both HTTP & FTP protocols. HTTP downloads can use either Net::HTTP, or libcurl (via the Curb gem)}
   s.email = %q{phi.sanders@sciphi.me}
   s.extra_rdoc_files = [
     "LICENSE.txt",
@@ -29,6 +29,8 @@ Gem::Specification.new do |s|
     "lib/downspout/logger.rb",
     "lib/downspout/tmp_file.rb",
     "test/downspout_test.rb",
+    "test/fixtures/ruby.png",
+    "test/servlet.rb",
     "test/test_helper.rb",
     "test/test_logger.rb",
     "test/test_servlet.rb",
@@ -42,26 +44,44 @@ Gem::Specification.new do |s|
   s.homepage = %q{http://github.com/sci-phi/downspout}
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.3.7}
-  s.summary = %q{Downspout is an easy-to-use library for downloading files from given URLs.}
+  s.rubygems_version = %q{1.4.2}
+  s.summary = %q{Downspout is an easy-to-use ruby library for downloading files from URLs.}
+  s.test_files = [
+    "test/downspout_test.rb",
+    "test/servlet.rb",
+    "test/test_helper.rb",
+    "test/test_logger.rb",
+    "test/test_servlet.rb",
+    "test/unit/base_test.rb",
+    "test/unit/config_test.rb",
+    "test/unit/credential_test.rb",
+    "test/unit/downloader_test.rb",
+    "test/unit/tmp_file_test.rb",
+    "test/watchr.rb"
+  ]
 
   if s.respond_to? :specification_version then
-    current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_development_dependency(%q<jeweler>, ["~> 1.5.2"])
-      s.add_development_dependency(%q<shoulda>, [">= 0"])
-      s.add_development_dependency(%q<rcov>, [">= 0"])
+      s.add_development_dependency(%q<rcov>, [">= 0.9.9"])
+      s.add_development_dependency(%q<shoulda>, [">= 2.11.3"])
+      s.add_development_dependency(%q<mocha>, [">= 0.9.12"])
+      s.add_development_dependency(%q<curb>, [">= 0.7.15"])
     else
       s.add_dependency(%q<jeweler>, ["~> 1.5.2"])
-      s.add_dependency(%q<shoulda>, [">= 0"])
-      s.add_dependency(%q<rcov>, [">= 0"])
+      s.add_dependency(%q<rcov>, [">= 0.9.9"])
+      s.add_dependency(%q<shoulda>, [">= 2.11.3"])
+      s.add_dependency(%q<mocha>, [">= 0.9.12"])
+      s.add_dependency(%q<curb>, [">= 0.7.15"])
     end
   else
     s.add_dependency(%q<jeweler>, ["~> 1.5.2"])
-    s.add_dependency(%q<shoulda>, [">= 0"])
-    s.add_dependency(%q<rcov>, [">= 0"])
+    s.add_dependency(%q<rcov>, [">= 0.9.9"])
+    s.add_dependency(%q<shoulda>, [">= 2.11.3"])
+    s.add_dependency(%q<mocha>, [">= 0.9.12"])
+    s.add_dependency(%q<curb>, [">= 0.7.15"])
   end
 end
 
