@@ -2,7 +2,7 @@ require 'test_helper'
 
 class DownloaderTest < Test::Unit::TestCase
 
-  context "Downspout" do
+ context "Downspout" do
     context "Downloader" do
 
       should "respond to URL" do
@@ -206,6 +206,30 @@ class DownloaderTest < Test::Unit::TestCase
     assert g.response.is_a?(Net::HTTPResponse)
     assert_equal Net::HTTPOK, g.response.class
     assert g.response_headers.keys.include?('content-type') # Note case difference for Net/HTTP vs Curb
+  end
+
+  context "with content disposition header defining file name" do
+    setup do
+      @dlx = Downspout::Downloader.new()
+      @faux_headers = File.read( File.join( Test::App.root, "test", "fixtures", "faux_headers.txt" ) )
+
+      @dlx.send("parse_headers_from_string!", @faux_headers )
+    end
+
+    should "have expected keys parsed from headers" do
+      all_keys = @dlx.response_headers.keys
+      assert_equal 10, all_keys.size
+    end
+
+    should "have a key for the content dispositon header" do
+      all_keys = @dlx.response_headers.keys
+      the_key = all_keys.select{|k| k =~ /content-disposition/i }.first
+      assert the_key
+    end
+    
+    should "extract the appropriate file name" do
+      assert_equal "0123456789_X.pdf", @dlx.send("generate_file_name")
+    end
   end
 
 end

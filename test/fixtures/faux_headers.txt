@@ -1,0 +1,10 @@
+HTTP/1.1 200 OK
+Date: Wed, 30 Mar 2011 19:40:11 GMT
+Server: Apache/2.2.11 (Unix) DAV/2 PHP/5.3.1
+Content-Length: 1181801
+Content-Disposition: attachement; filename=0123456789_X.pdf
+X-HP-CAM-COLOR: V=1;ServerAddr=wbO8IqKJzqoYjXdW+68u4A==;GUID=1|0-iccMJzdDzi5kYvyeH1L5A_QSAtcJxSoyASpOXx9kY.|L3ByaW1pczY0L2Rvd25sb2FkL2N1c3RvbWJvb2s.
+X-Powered-By: Servlet/2.5 JSP/2.1
+Vary: Accept-Encoding,User-Agent
+Content-Type: application/pdf
+Connection: close

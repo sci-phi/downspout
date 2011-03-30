@@ -171,9 +171,7 @@ module Downspout
         ftp = Net::FTP.open( @uri.host ) do |ftp|
           ftp.login( cred.user_name, cred.pass_word ) unless cred.nil?
           ftp.passive
-          ftp.chdir( File.dirname( @uri.path ) )
-          
-          $logger.debug("downspout | downloader | net_ftp_download | Local Path : #{@path} ...")
+          ftp.chdir( File.dirname( @uri.path ) )          
           ftp.getbinaryfile( self.basename, @path )
         end
       rescue Exception => e
@@ -181,10 +179,12 @@ module Downspout
         raise e
       end
 
-      done = File.exist?( @path )
-      $logger.debug("downspout | downloader | net_ftp_download | #{basename} downloaded? : #{done}.")
+      if !(File.exist?( @path )) then
+        $logger.error("downspout | downloader | net_ftp_download | #{basename} download failed.")
+        return false
+      end
 
-      return done
+      return true
     end
 
     def net_http_download
@@ -193,12 +193,8 @@ module Downspout
       begin
         response = net_http_fetch( @url , 1)
         open( @path, "wb" ) do |file|
-        
           file.write(response.body)
         end
-
-       $logger.debug("downspout | downloader | net_http_download | Response Body : #{response.body[0..5].strip}")
-
       rescue SocketError => dns_err
         $logger.error("downspout | downloader | net_http_download | Net/HTTP DNS Error | #{@uri.host} | #{dns_err.inspect}")
         remove_file_at_target_path
@@ -212,23 +208,19 @@ module Downspout
       @response.each_header do |k,v|
         new_header_str += "#{k}: #{v}\r\n"
       end
-      @response_headers = parse_headers_from_string( new_header_str )
-
+      parse_headers_from_string!( new_header_str )
   
       if ((response.code.to_i != 200) and (response.code.to_i != 202)) then
         # missing file, failed download - delete the response body [if downloaded]
         remove_file_at_target_path
         return false
       end
-
-      $logger.debug("downspout | downloader | net_http_download | Headers : #{response.header}")
     
       if !( File.exist?( @path ) ) then
         $logger.error("downspout | downloader | net_http_download | Missing File at download path : #{@path}")
         return false
       end
       
-      $logger.debug("downspout | downloader | net_http_download | Successful.")
       return true
     end
 
@@ -244,19 +236,17 @@ module Downspout
       # TODO : implement credentials for downloads via net_http_fetch
       my_request.basic_auth 'account', 'p4ssw0rd'
 
-      $logger.debug("downspout | downloader | net_http_fetch | Firing...")
       @response = Net::HTTP.start( u.host, u.port ) do |http|
         http.request( my_request )
       end
 
-      $logger.debug("downspout | downloader | net_http_fetch | Response : #{@response}")
-      
       case @response
       when Net::HTTPSuccess
         @response
       when Net::HTTPRedirection
         net_http_fetch( @response['location'], limit - 1 )
       else
+        $logger.error("downspout | downloader | net_http_fetch | Response : #{@response}")
         @response.error!
       end
     end
@@ -278,10 +268,8 @@ module Downspout
         remove_file_at_target_path
       end
 
-      $logger.debug("downspout | downloader | curb_http_download | Headers : #{curb.header_str}")
-
       # populate the response headers from curb header string
-      @response_headers = parse_headers_from_string( curb.header_str )
+      parse_headers_from_string!( curb.header_str )
 
       # populate a 'proxy' HTTPResponse object with the Curb data...
       hr_klass = Net::HTTPResponse.send('response_class', curb.response_code.to_s)
@@ -291,19 +279,15 @@ module Downspout
         curb.response_code,
         @response_headers["HTTP"][:message] )
         
-      $logger.debug("downspout | downloader | curb_http_download | Response : #{@response.inspect}")
-
       if !( File.exist?( @path ) ) then
         $logger.error("downspout | downloader | curb_http_download | Missing File at download path : #{@path}")
         return false
       end
       
-      $logger.debug("downspout | downloader | curb_http_download | Successful.")
       return true
     end
 
-    def parse_headers_from_string( header_str )
-      $logger.debug("downspout | downloader | parse_headers_from_string | String : #{header_str}")
+    def parse_headers_from_string!( header_str )
       header_hash = {}
       http_hash = {}
       headers = header_str.split("\r\n")
@@ -314,40 +298,54 @@ module Downspout
       http_hash[:code] = (http_info.split("\r\n")[0].split(" ")[1]).to_i
       http_hash[:message] = http_info.split("\r\n")[0].split(" ")[2]
       
-      $logger.debug("downspout | downloader | parse_headers_from_string | Response : #{http_hash[:version]}, #{http_hash[:code]}, #{http_hash[:message]}")
       header_hash["HTTP"] = http_hash
       
       headers[1..-1].each do |line|
         header_name, header_value = line.match(/([\w\-\s]+)\:\s?(.*)/)[1..2]
         header_hash[header_name] = header_value
       end
-  
-      return header_hash
+
+      @response_headers = header_hash
     end
 
     def generate_file_name
+      result = nil
+
+      result = file_name_from_content_disposition
+      result = file_name_from_content_type if result.nil?
+
+      return result
+    end
+
+    def file_name_from_content_disposition
+      file_name = nil
 
       cd_key = response_headers.keys.select{|k| k =~ /content-disposition/i }.first
-      # example : Content-Disposition: attachment; filename="iPad_User_Guide.pdf"
+
       if cd_key then
         disposition = @response_headers[cd_key]
         if disposition then
-          file_name = disposition.match("filename=\"(.+)\"")[1]
-          return file_name unless (file_name.nil? || file_name.empty?)
+          # example : Content-Disposition: attachment; filename="iPad_User_Guide.pdf"
+          file_name = disposition.match("filename=\"?(.+)\"?")[1]
         end
       end
 
+      $logger.debug("downspout | downloader | file_name_from_content_disposition | #{file_name}")
+      return file_name      
+    end
+
+    def file_name_from_content_type
       ct_key = response_headers.keys.select{|k| k =~ /content-type/i }.first
       return nil unless ct_key
 
       file_type = @response_headers[ct_key]
       return nil unless file_type
 
-      # TODO : smarter file name generation
-      return "#{@basename || 'default'}.html" if file_type =~ /html/
-      return "#{@basename || 'default'}.pdf" if file_type =~ /pdf/
+      file_name = "#{@basename || 'default'}.html" if (file_type =~ /html/)
+      file_name = "#{@basename || 'default'}.pdf" if (file_type =~ /pdf/) && file_name.nil?
 
-      return nil
+      $logger.debug("downspout | downloader | file_name_from_content_type | #{file_name}")
+      return file_name
     end
     
   end
