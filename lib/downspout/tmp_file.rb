@@ -5,7 +5,7 @@ module Downspout
 
   class Tmpfile < File
 
-    # acepts an options hash which can include either or both of :name and :prefix
+    # accepts an options hash which can include either or both of :name and :prefix
     # then creates a Tempfile with the optionally given name in a unique sub-folder
     # of the configured directory, optionally named with the prefix string. 
     # The unique folder name includes the prefix, a sortable date, the PID of
