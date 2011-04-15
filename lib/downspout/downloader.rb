@@ -132,12 +132,18 @@ module Downspout
       $logger.debug("downspout | downloader | download! | #{self.basename} downloaded? : #{downloaded} ")
       @finished_at = Time.now
 
-      new_name = generate_file_name      
+      new_name = generate_file_name
+
       if (tf && new_name && !(@basename == new_name)) then
         # rename file more appropriately
         $logger.debug("downspout | downloader | download! | Renaming #{@basename} to #{new_name} ...")
         new_path = File.join( File.dirname( tf.path ), new_name)
-        FileUtils.mv( tf.path, new_path )
+        begin
+          FileUtils.mv( tf.path, new_path ) 
+        rescue Exception => e
+          $logger.error("downspout | downloader | download! | Exception while renaming #{@basename} : #{e}")
+          raise e
+        end
         @path = new_path
       end
 
@@ -317,7 +323,11 @@ module Downspout
       return result
     end
 
+
+    # Extracts filename from Content-Disposition Header per RFC 2183
+    # "http://tools.ietf.org/html/rfc2183"
     def file_name_from_content_disposition
+    
       file_name = nil
 
       cd_key = response_headers.keys.select{|k| k =~ /content-disposition/i }.first
@@ -326,7 +336,7 @@ module Downspout
         disposition = @response_headers[cd_key]
         if disposition then
           # example : Content-Disposition: attachment; filename="iPad_User_Guide.pdf"
-          file_name = disposition.match("filename=\"?([^\"]+)\"?")[1]
+          file_name = disposition.match("filename=\"?([^;\"]+)\"?")[1]
         end
       end
 

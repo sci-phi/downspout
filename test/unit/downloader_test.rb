@@ -236,6 +236,11 @@ class DownloaderTest < Test::Unit::TestCase
       assert_equal "0123456789_X.pdf", @dlx.send("generate_file_name")
     end
 
+    should "extract the expected file name (followed by size)" do
+      @dlx.response_headers["Content-Disposition"].gsub!("0123456789_X.pdf", "2c2afa1c-1b47-422e-bf2d-9848373381bc.pdf;size=5524642")
+      assert_equal "2c2afa1c-1b47-422e-bf2d-9848373381bc.pdf", @dlx.send("generate_file_name")
+    end
+
   end
 
 end
