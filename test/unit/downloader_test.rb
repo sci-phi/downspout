@@ -243,4 +243,51 @@ class DownloaderTest < Test::Unit::TestCase
 
   end
 
+  context "last location for curb redirects" do
+    setup do
+      @expected_url = "https://download.github.com/rails-rails-v2.3.11-0-gb0c3d45.tar.gz"
+      @header_str = "HTTP/1.1 302 Found
+Server: nginx/0.7.67
+Date: Mon, 18 Apr 2011 01:53:16 GMT
+Content-Type: text/html; charset=utf-8
+Connection: keep-alive
+Status: 302 Found
+Location: https://nodeload.github.com/rails/rails/tarball/v2.3.11
+X-Runtime: 3ms
+Content-Length: 121
+Cache-Control: no-cache
+Strict-Transport-Security: max-age=2592000
+
+HTTP/1.1 302 Moved Temporarily
+Server: nginx/0.7.67
+Date: Mon, 18 Apr 2011 01:53:17 GMT
+Transfer-Encoding: chunked
+Connection: keep-alive
+Location: https://download.github.com/rails-rails-v2.3.11-0-gb0c3d45.tar.gz
+
+HTTP/1.1 200 OK
+Server: nginx/0.7.67
+Date: Mon, 18 Apr 2011 01:53:17 GMT
+Content-Type: application/octet-stream
+Content-Length: 3416081
+Last-Modified: Mon, 18 Apr 2011 01:45:25 GMT
+Connection: keep-alive
+Accept-Ranges: bytes"
+    end
+
+    should "grep last location header" do
+      last_location = @header_str.scan(/Location\:\s?(.*)\W/).last.first
+
+      assert_equal @expected_url, last_location
+    end
+
+    should "match last_location method" do
+      @obj = Downspout::Downloader.new( :url => "http://bad.url/path" )
+      last_location = @obj.send('curb_last_location', @header_str )
+
+      assert_equal String, last_location.class
+      assert_equal @expected_url, last_location
+    end
+  end
+
 end
