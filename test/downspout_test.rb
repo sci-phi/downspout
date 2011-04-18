@@ -17,26 +17,40 @@ class DownspoutTest < Test::Unit::TestCase
 
     $test_ws.mount(TestServlet.path, TestServlet)
 
-    two_deep_proc = Proc.new { |req, resp|
-      resp.body = '2-deep redirector proc mounted on #{req.script_name}'
-      resp.set_redirect( HTTPStatus::MovedPermanently, '/one/deep')
+    n_deep_proc = Proc.new { |req, resp|
+      resp.body = '3-deep redirector proc mounted on #{req.script_name}'
+
+      num = req.query['n'].to_i
+
+      if num > 1 then
+        resp.set_redirect( HTTPStatus::MovedPermanently, "/deep/?n=#{num - 1}") 
+      else
+        resp.set_redirect( HTTPStatus::MovedPermanently, '/READ_ME.rdoc')
+      end
     }
 
-    $test_ws.mount('/two/deep/', HTTPServlet::ProcHandler.new(two_deep_proc) )
+    $test_ws.mount('/deep', HTTPServlet::ProcHandler.new(n_deep_proc) )
+
+    two_deep_proc = Proc.new { |req, resp|
+      resp.body = '2-deep redirector proc mounted on #{req.script_name}'
+      resp.set_redirect( HTTPStatus::MovedPermanently, '/deep/one')
+    }
+
+    $test_ws.mount('/deep/two', HTTPServlet::ProcHandler.new(two_deep_proc) )
 
     redir_proc = Proc.new { |req, resp|
       resp.body = 'redirector proc mounted on #{req.script_name}'
       resp.set_redirect( HTTPStatus::MovedPermanently, '/READ_ME.rdoc')
     }
 
-    $test_ws.mount('/one/deep/', HTTPServlet::ProcHandler.new(redir_proc) )
+    $test_ws.mount('/deep/one', HTTPServlet::ProcHandler.new(redir_proc) )
 
     $test_ws.mount("/images", HTTPServlet::FileHandler,
       File.join( Test::App.root, "test", "fixtures"), {:FancyIndexing => true} )
 
     $test_ws_thread = Thread.new { $test_ws.start }
   end
-      
+
   def test_download_rdoc_from_servlet
     some_url = $test_read_me_url
 
@@ -69,10 +83,12 @@ class DownspoutTest < Test::Unit::TestCase
     end
 
     should "fail with Curb error in case of excessive redirects" do
-      two_deep_url = "http://127.0.0.1:8899/two/deep?curby"
+      assert_equal 2, Downspout::Config.max_redirects
+
+      too_deep_url = "http://127.0.0.1:8899/deep?n=3&test=curb"
 
       assert_raise Curl::Err::TooManyRedirectsError do
-        dl = Downspout.fetch_url( two_deep_url )
+        dl = Downspout.fetch_url( too_deep_url )
       end
     end
 
@@ -82,12 +98,13 @@ class DownspoutTest < Test::Unit::TestCase
       end
 
       should "fail with Downspout error in case of excessive redirects" do
-        two_deep_url = "http://127.0.0.1:8899/two/deep?no-curb"
+        assert_equal 2, Downspout::Config.max_redirects
+
+        too_deep_url = "http://127.0.0.1:8899/deep/?n=3&test=no-curb"
   
         assert_raise Downspout::ExcessiveRedirects do
-          dl = Downspout.fetch_url( two_deep_url )
+          dl = Downspout.fetch_url( too_deep_url )
         end
-
       end
 
       teardown do
@@ -102,10 +119,12 @@ class DownspoutTest < Test::Unit::TestCase
   end
 
   should "fail due to excessive redirects" do
-    @obj = Downspout::Downloader.new( :url => "http://127.0.0.1:8899/two/deep?over-draft" )
+    @obj = Downspout::Downloader.new( :url => "http://127.0.0.1:8899/deep/?n=2&test=over-draft" )
 
     assert_raise Downspout::ExcessiveRedirects do
-     @obj.send('net_http_fetch', @obj.url, 1 )  # uses send to bypass Curb and force Net::HTTP
+      # use send to bypass Curb and force Net::HTTP
+      # also pass 1 so that the second redirect is too much
+      @obj.send('net_http_fetch', @obj.url, 1 )
     end
   end
 
@@ -113,7 +132,8 @@ class DownspoutTest < Test::Unit::TestCase
     @obj = Downspout::Downloader.new( :url => "http://fu.man.chu/deep/nested/resource?over-draft" )
 
     assert_raise SocketError do
-     @obj.send('net_http_fetch', @obj.url) # uses send to bypass Curb and force Net::HTTP
+      # uses send to bypass Curb and force Net::HTTP
+      @obj.send('net_http_fetch', @obj.url)
     end
   end
 
@@ -125,3 +145,4 @@ class DownspoutTest < Test::Unit::TestCase
   end
 
 end
+

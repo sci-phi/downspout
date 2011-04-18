@@ -1,10 +1,10 @@
 if !(defined?( $logger )) then
-  if defined?( RAILS_DEFAULT_LOGGER ) then
-    $logger = RAILS_DEFAULT_LOGGER
+  if ( defined?( Rails ) && !(Rails.logger.nil?) ) then
+    $logger = Rails.logger
   else
     require 'logger'
     $logger = Logger.new( STDERR )
-    $logger.level = Logger::INFO
+    $logger.level = Logger::WARN
   end
 end
 

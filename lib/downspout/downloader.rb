@@ -23,6 +23,7 @@ module Downspout
       @response_headers = {}
       @started_at = nil
       @finished_at = nil
+      @redirected_url = nil
       
       if options.respond_to?(:keys) then
         options.each do |key, value|
@@ -58,7 +59,7 @@ module Downspout
       if !(@path.nil?) then
         @basename = File.basename( @path )
       else
-        if !(@uri.path.nil? || @uri.path.empty? || uri.path == '/')
+        if !(@uri.path.nil? || @uri.path.empty? || @uri.path == '/')
           @basename = File.basename( @uri.path ) 
         else
           $logger.debug("downspout | downloader | basename | Bad URI path") 
@@ -197,7 +198,7 @@ module Downspout
       $logger.debug("downspout | downloader | net_http_download | Downloading #{@url} ...")
 
       begin
-        response = net_http_fetch( @url , 1)
+        response = net_http_fetch( @url )
         open( @path, "wb" ) do |file|
           file.write(response.body)
         end
@@ -230,27 +231,38 @@ module Downspout
       return true
     end
 
-    def net_http_fetch( url_str, limit = 10 )
-      $logger.debug("downspout | downloader | net_http_fetch | URL: #{url_str}, Redirects: #{limit}.")
+    def net_http_fetch( url_str, redirects = 0 )
+      $logger.debug("downspout | downloader | net_http_fetch | URL: #{url_str}, Redirects: #{redirects}.")
+
       raise Downspout::BadURL, 'URL is missing' if url_str.nil?
-      raise Downspout::ExcessiveRedirects, 'HTTP redirect too deep' if limit == 0
+
+      if redirects > Downspout::Config.max_redirects then
+        raise Downspout::ExcessiveRedirects, 'HTTP redirect too deep'
+      end
 
       u = URI.parse( url_str )
+      
+      http = Net::HTTP.new( u.host, u.port )
+        
+      if (u.scheme == "https") then
+        http.use_ssl = true
+        http.verify_mode = OpenSSL::SSL::VERIFY_NONE if !(Downspout::Config.ssl_verification?)
+      end
 
-      my_request = Net::HTTP::Get.new( "#{u.path}?#{u.query}" )
+      my_request = Net::HTTP::Get.new( u.request_uri )
 
       # TODO : implement credentials for downloads via net_http_fetch
       my_request.basic_auth 'account', 'p4ssw0rd'
 
-      @response = Net::HTTP.start( u.host, u.port ) do |http|
-        http.request( my_request )
-      end
+      @response = http.request( my_request )
 
       case @response
       when Net::HTTPSuccess
         @response
       when Net::HTTPRedirection
-        net_http_fetch( @response['location'], limit - 1 )
+        @redirected_url = @response['location']
+        # TODO : use the new location to update the file name / extension when unknown
+        net_http_fetch( @redirected_url, redirects + 1 )
       else
         $logger.error("downspout | downloader | net_http_fetch | Response : #{@response}")
         @response.error!
@@ -261,10 +273,10 @@ module Downspout
       $logger.debug("downspout | downloader | curb_http_download | Downloading #{@url} ...")
 
       begin
-        curb = Curl::Easy.download( @url, @path) {|c| c.follow_location=true; c.max_redirects=1;}
-      rescue Curl::Err::HostResolutionError
+        curb = Curl::Easy.download( @url, @path) {|c| c.follow_location=true; c.max_redirects = Downspout::Config.max_redirects;}
+      rescue Curl::Err::HostResolutionError => dns_err
         $logger.error("downspout | downloader | curb_http_download | Curb/Curl DNS Error | #{@uri.host}")
-        return false
+        raise dns_err
       end
       
       $logger.debug("downspout | downloader | curb_http_download | Response Code : #{curb.response_code}")
@@ -276,6 +288,12 @@ module Downspout
 
       # populate the response headers from curb header string
       parse_headers_from_string!( curb.header_str )
+
+      ultimate_url = curb_last_location( curb.header_str )
+      if !( ultimate_url == @url ) then
+        # re-directed
+        @redirected_url = ultimate_url
+      end
 
       # populate a 'proxy' HTTPResponse object with the Curb data...
       hr_klass = Net::HTTPResponse.send('response_class', curb.response_code.to_s)
@@ -293,22 +311,42 @@ module Downspout
       return true
     end
 
+    def curb_last_location( header_string )
+      matches = header_string.scan(/Location\:\s?(.*)\W/)
+
+      return nil if matches.nil?
+      return nil if (matches.class == Array) && (matches.last.nil?)
+
+      result = matches.last.first.strip
+      $logger.error("downspout | downloader | curb_last_location | #{result}")
+      return result
+    end
+
     def parse_headers_from_string!( header_str )
+      #  $logger.debug("downspout | downloader | parse_headers_from_string! | Header String : #{header_str}")
       header_hash = {}
-      http_hash = {}
+
       headers = header_str.split("\r\n")
-  
       http_info = headers[0]
+
+      http_hash = {}
       http_hash[:header] = http_info
       http_hash[:version] = http_info.split(" ")[0].match("HTTP/([0-9\.]+)")[1]
       http_hash[:code] = (http_info.split("\r\n")[0].split(" ")[1]).to_i
       http_hash[:message] = http_info.split("\r\n")[0].split(" ")[2]
       
       header_hash["HTTP"] = http_hash
-      
-      headers[1..-1].each do |line|
-        header_name, header_value = line.match(/([\w\-\s]+)\:\s?(.*)/)[1..2]
-        header_hash[header_name] = header_value
+
+      headers[1..-1].each do |line|      
+        next if line.nil? || line.empty?
+        begin
+          matches = line.match(/([\w\-\s]+)\:\s?(.*)/)
+          next if matches.nil? || matches.size < 3
+          header_name, header_value = matches[1..2]
+          header_hash[header_name] = header_value
+        rescue Exception => e
+          $logger.warn("downspout | downloader | parse_headers_from_string! | #{line}, Exception : #{e}")
+        end
       end
 
       @response_headers = header_hash
@@ -318,20 +356,22 @@ module Downspout
       result = nil
 
       result = file_name_from_content_disposition
+      result = file_name_from_redirect if result.nil?
       result = file_name_from_content_type if result.nil?
 
       return result
     end
 
-
     # Extracts filename from Content-Disposition Header per RFC 2183
     # "http://tools.ietf.org/html/rfc2183"
     def file_name_from_content_disposition
-    
       file_name = nil
 
-      cd_key = response_headers.keys.select{|k| k =~ /content-disposition/i }.first
+      cd_key = response_headers.keys.select{|k| k =~ /content-disposition/i }.first # TODO: better to use the last?
 
+      $logger.debug("downspout | downloader | file_name_from_content_disposition | cd key : #{cd_key}")
+      return nil if cd_key.nil?
+      
       if cd_key then
         disposition = @response_headers[cd_key]
         if disposition then
@@ -356,6 +396,19 @@ module Downspout
 
       $logger.debug("downspout | downloader | file_name_from_content_type | #{file_name}")
       return file_name
+    end
+
+    def file_name_from_redirect
+      return nil if @redirected_url.nil?
+
+      my_uri = URI::parse( @redirected_url )
+
+      if !(my_uri.path.nil? || my_uri.path.empty? || my_uri.path == '/')
+        return File.basename( my_uri.path )
+      else
+        $logger.debug("downspout | downloader | basename | Bad URI path") 
+        return nil
+      end
     end
     
   end

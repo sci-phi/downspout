@@ -15,17 +15,16 @@ module Downspout
   end
 
 =begin rdoc
-  Download a file from a given URL to a given Path on the local system
-  The path is optional and will default to a generated temporary file
+  Download a file from a given URL. The path is optional and will default to a generated temporary file.
 =end
-  def self.download_url_to_path( some_url, some_path = nil )
-    $logger.debug("downspout | download_url_to_path |  URL : #{some_url}")
-    $logger.debug("downspout | download_url_to_path |  Download Path : #{some_path}")
+  def self.fetch_url( some_url, some_path = nil )
+    $logger.debug("downspout | fetch_url |  URL : #{some_url}")
+    $logger.debug("downspout | fetch_url |  Download Path : #{some_path}")
 
     begin
       d = Downspout::Downloader.new( :url => some_url, :path => some_path )
     rescue Exception => e
-      $logger.error("downspout | download_url_to_path | Exception : '#{e}'")
+      $logger.error("downspout | fetch_url | Exception : '#{e}'")
       return nil if e.class == Downspout::UnsupportedScheme
       raise e
     end
@@ -33,19 +32,16 @@ module Downspout
     fetched = d.download!
 
     if !(fetched) then
-      $logger.error("downspout | download_url_to_path |  Fetch Failed : #{d.url} ")
+      $logger.error("downspout | fetch_url |  Fetch Failed : #{d.url} ")
       return nil
     end
 
-    $logger.debug("downspout | download_url_to_path |  Local File : #{d.path} ")
+    $logger.debug("downspout | fetch_url |  Local File : #{d.path} ")
     return d
   end
 
-=begin rdoc
-  Convenience method for downloading a file from an URL without specifying a path for storage.
-=end
-  def self.fetch_url( the_url )
-    return self.download_url_to_path( the_url )
+  def self.download_url_to_path( the_url, the_path ) #:nodoc:
+    return self.fetch_url( the_url, the_path )
   end
 
 =begin rdoc

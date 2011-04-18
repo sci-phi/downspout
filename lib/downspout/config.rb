@@ -8,6 +8,8 @@ module Downspout
     @@curb_allowed = true
     @@curb_enabled = true
     @@prefix = 'downspout'
+    @@max_redirects = 2
+    @@ssl_verification = true
 
     def self.tmp_dir
       return @@tmp_dir
@@ -29,6 +31,14 @@ module Downspout
       return @@credentials
     end
 
+    def self.max_redirects
+      @@max_redirects
+    end
+
+    def self.max_redirects=( num )
+      @@max_redirects = num
+    end
+
     def self.network_enabled?
       return @@network_enabled
     end
@@ -40,6 +50,10 @@ module Downspout
 
     def self.enable_networking!
       @@network_enabled = true
+    end
+
+    def self.ssl_verification?
+      @@ssl_verification
     end
 
     def self.curb_available?

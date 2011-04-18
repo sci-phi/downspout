@@ -4,6 +4,7 @@ require 'rubygems'
 require 'fileutils'
 require 'uri'
 require 'net/http'
+require 'net/https'
 require 'net/ftp'
 
 # add this directory to the path...

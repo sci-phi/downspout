@@ -4,28 +4,56 @@ class ConfigTest < Test::Unit::TestCase
   context "Downspout" do
     context "Config" do
 
-      should "respond to tmp_dir" do
-        assert Downspout::Config.respond_to?(:tmp_dir)
+      should "respond to max_redirects" do
+        assert Downspout::Config.respond_to?(:max_redirects)
       end
 
-      should "default to '/tmp/downloads/' for Downspout::Config#tmp_dir" do
-        assert_equal "/tmp/downloads/", Downspout::Config.tmp_dir
+      should "respond to tmp_dir" do
+        assert Downspout::Config.respond_to?(:tmp_dir)
       end
 
       should "respond to Network Enabled" do
         assert Downspout::Config.respond_to?("network_enabled?")
       end
 
-      should "default to Network Enabled" do
-        assert Downspout::Config.network_enabled?
-      end
-
       should "respond to Disable Networking" do
         assert Downspout::Config.respond_to?("disable_networking!")
       end
 
+      should "respond to SSL Verification" do
+        assert Downspout::Config.respond_to?("ssl_verification?")
+      end
+
+      context "defaults" do
+  
+        should "use '/tmp/downloads/' for Downspout::Config#tmp_dir" do
+          assert_equal "/tmp/downloads/", Downspout::Config.tmp_dir
+        end
+
+        should "be 2 redirect max" do
+          assert_equal 2, Downspout::Config.max_redirects
+        end
+
+        should "be Network Enabled" do
+          assert Downspout::Config.network_enabled?
+        end
+
+        should "use 'downspout' Default Prefix" do
+          assert_equal "downspout", Downspout::Config.default_prefix
+        end
+
+        should "use Curb library if available" do
+          assert Downspout::Config.curb_available?
+          assert Downspout::Config.enable_curb!
+        end
+
+        should "use SSL Verification" do
+          assert Downspout::Config.ssl_verification?
+        end
+
+      end
+      
       should "allow setting Default Prefix" do
-        assert_equal "downspout", Downspout::Config.default_prefix
         Downspout::Config.default_prefix = "fu-manchu"
         assert_equal "fu-manchu", Downspout::Config.default_prefix
       end
@@ -44,15 +72,17 @@ class ConfigTest < Test::Unit::TestCase
         assert Downspout::Config.curb_available?
       end
 
-      should "enable Curb if library is available" do
-        assert Downspout::Config.curb_available?
-        assert Downspout::Config.enable_curb!
-      end
-
       should "support enabling network operations" do
         assert !(Downspout::Config.network_enabled?)
         assert Downspout::Config.enable_networking!
         assert Downspout::Config.network_enabled?
+      end
+
+      should "allow customization of redirect maximum" do
+        Downspout::Config.max_redirects = 3
+        assert_equal 3, Downspout::Config.max_redirects
+        Downspout::Config.max_redirects = 2
+        assert_equal 2, Downspout::Config.max_redirects
       end
 
       context "Host-Based Credentials" do
