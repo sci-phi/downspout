@@ -83,14 +83,21 @@ module Downspout
     end
 
     def self.add_credential( options = nil )
-      return nil unless options && options.respond_to?(:keys)
-      options = {:scheme => 'ftp'}.merge!( options )
+      return nil unless options
 
-      c = Credential.new( options )
+      if (options.class == Downspout::Credential) then
+        c = options
+      else
+        return nil unless options.respond_to?(:keys)
 
+        options = {:scheme => 'ftp'}.merge!( options ) # defaults to FTP
+
+        c = Credential.new( options )
+      end
+      
       $logger.debug("downspout | config | add_credential | #{c.host}, #{c.user_name}, #{c.scheme} ")
 
-      @@credentials << c      
+      @@credentials << c
 
       return c
     end

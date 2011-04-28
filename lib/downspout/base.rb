@@ -48,21 +48,19 @@ module Downspout
   Utility method for validating a URL without initiating a download
 =end
   def self.viable_url?( url_string )
-    $logger.info("downspout | supported_protocol? |  URL : #{url_string} ")
-
-    # remove user/password prefix if provided
-    clean_url = self.extract_credentials_from_url!( url_string )
+    $logger.info("downspout | viable_url? |  URL : #{url_string} ")
 
     begin
+      # remove user/password prefix if provided
+      clean_url = self.extract_credentials_from_url!( url_string )
+  
       uri = URI.parse( clean_url )
     rescue URI::InvalidURIError
-      $logger.warn("downspout | supported_protocol? | The format of the url is not valid : #{url_string}")
+      $logger.warn("downspout | viable_url? | The format of the url is not valid : #{url_string}")
       return false
     end
 
     return false unless self.supported_protocol?( uri.scheme )
-
-    # TODO : do more in-depth checks on URL validity
 
     return true
   end
@@ -104,24 +102,28 @@ module Downspout
   end
   
   def self.extract_credentials_from_url!( some_url )
-    the_uri = URI.parse( some_url )
 
-    if the_uri.userinfo.nil? then
+    begin
+      some_uri = URI::parse( some_url )
+    rescue NoMethodError => e
+      # convert to Invalid URI as that's the more pertinent issue
+      raise URI::InvalidURIError, e.to_s
+    end
+
+    cred = Downspout::Credential.create_from_uri( some_uri )
+
+    if cred.nil? then
       return some_url
     end
 
-    begin
-      Downspout::Config.add_credential( :scheme => the_uri.scheme,
-        :host => the_uri.host,
-        :user_name => the_uri.user,
-        :pass_word => the_uri.password
-        )
-    ensure
-      the_uri.user = nil
-      the_uri.password = nil
-    end
-    
-    return the_uri.to_s
+    Downspout::Config.add_credential( cred )
+
+    # zero out the user info
+    some_uri.user = nil
+    some_uri.password = nil
+
+    # return sanitized URL string
+    return some_uri.to_s
   end
 
 end

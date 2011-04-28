@@ -114,11 +114,27 @@ class DownspoutTest < Test::Unit::TestCase
         end
 
         should "be accepted with FTP protocol containing user & password" do
+          num = Downspout::Config.credentials.size
+          
           assert Downspout.viable_url?( "ftp://uzer:passw0rd@host.domain.tld/resource/file.format" )
+
+          assert_equal num + 1, Downspout::Config.credentials.size
+
+          assert_equal 'host.domain.tld', Downspout::Config.credentials.last.host
         end
 
       end
     end
 
+    should "clean URLs with user & password via extract credentials" do
+      test_url = "ftp://uzer:passw0rd@host.domain.tld/resource/file.format"
+
+      new_url = Downspout.extract_credentials_from_url!( test_url )
+
+      assert !(new_url == test_url)
+      assert_equal URI::parse( test_url ).host, URI::parse( new_url ).host
+      assert_equal URI::parse( test_url ).path, URI::parse( new_url ).path
+    end
+    
   end
 end

@@ -167,11 +167,21 @@ module Downspout
 
       # look up the credentials for this host
       cred = Downspout::Config.credentials.select{|c| c.scheme == 'ftp' }.select{ |c| c.host == @uri.host }.first
+
       if cred.nil? then
-        $logger.warn("downspout | downloader | net_ftp_download | No credentials found for '#{@uri.host}'.")
-        # proceed anyway - slight possibility it's an un-authorized FTP account...
+        $logger.warn("downspout | downloader | net_ftp_download | No established credentials found for '#{@uri.host}'.")
+
+        # attempt to extract credential from the URL
+        cred = Downspout::Credential.create_from_url( @url )
       else
         $logger.debug("downspout | downloader | net_ftp_download | Loaded credentials for #{cred.host} ...")
+      end
+      
+      if cred.nil? then
+        $logger.warn("downspout | downloader | net_ftp_download | No embedded credentials found in URL.")
+        # proceed anyway - slight possibility it's an un-authorized FTP account...
+      else
+        $logger.warn("downspout | downloader | net_ftp_download | Using embedded credentials found in URL with user: #{cred.user_name}.")
       end
       
       begin
@@ -240,7 +250,12 @@ module Downspout
         raise Downspout::ExcessiveRedirects, 'HTTP redirect too deep'
       end
 
-      u = URI.parse( url_str )
+      begin
+        u = URI.parse( url_str )
+      rescue NoMethodError => e
+        # convert to Invalid URI as that's the more pertinent issue
+        raise URI::InvalidURIError, e.to_s
+      end
       
       http = Net::HTTP.new( u.host, u.port )
         
