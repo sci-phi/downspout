@@ -189,7 +189,7 @@ module Downspout
           ftp.login( cred.user_name, cred.pass_word ) unless cred.nil?
           ftp.passive
           ftp.chdir( File.dirname( @uri.path ) )          
-          ftp.getbinaryfile( self.basename, @path )
+          ftp.getbinaryfile( File.basename(@uri.path), @path )
         end
       rescue Exception => e
         $logger.error("downspout | downloader | net_ftp_download | Exception : #{e}")
