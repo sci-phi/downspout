@@ -4,8 +4,7 @@ ws_root = File.expand_path( File.dirname( File.dirname( __FILE__ ) ) )
 
 ws_app = WEBrick::HTTPServer.new(:Port => 8899,
      :DocumentRoot => @test_ws_root,
-     :Logger => Log.new(nil, BasicLog::WARN), # Log/BasicLog from WEBrick - reduces spam in tests
-#     :Logger => $logger,
+     :Logger => Log.new(nil, BasicLog::WARN),
      :AccessLog => [])
 
 ws_app.mount(TestServlet.path, TestServlet)
@@ -24,8 +23,8 @@ redir_proc = Proc.new { |req, resp|
 
 ws_app.mount('/one/deep/', HTTPServlet::ProcHandler.new(redir_proc) )
 
-ws_thread = Thread.new { ws_app.start }    
-    
+ws_thread = Thread.new { ws_app.start }
+
 read_me_url = "#{TestServlet.url}/READ_ME.doc"
 
 puts "Request #{read_me_url}"

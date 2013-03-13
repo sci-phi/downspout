@@ -24,7 +24,7 @@ module Downspout
       @started_at = nil
       @finished_at = nil
       @redirected_url = nil
-      
+
       if options.respond_to?(:keys) then
         options.each do |key, value|
           self.send("#{key}=", value)
@@ -48,25 +48,25 @@ module Downspout
     def duration
       return nil unless @started_at
       return nil unless @finished_at
-      
+
       return @finished_at - @started_at
     end
 
     #  Extracts the file name from the URL or uses a default name based on the content-type header
     def basename
       return @basename unless @basename.nil?
-      
+
       if !(@path.nil?) then
         @basename = File.basename( @path )
       else
         if !(@uri.path.nil? || @uri.path.empty? || @uri.path == '/')
-          @basename = File.basename( @uri.path ) 
+          @basename = File.basename( @uri.path )
         else
-          $logger.debug("downspout | downloader | basename | Bad URI path") 
+          $logger.debug("downspout | downloader | basename | Bad URI path")
           @basename = 'file.downspout'
         end
       end
-            
+
       $logger.debug("downspout | downloader | basename | #{@basename} ")
 
       return @basename
@@ -140,7 +140,7 @@ module Downspout
         $logger.debug("downspout | downloader | download! | Renaming #{@basename} to #{new_name} ...")
         new_path = File.join( File.dirname( tf.path ), new_name)
         begin
-          FileUtils.mv( tf.path, new_path ) 
+          FileUtils.mv( tf.path, new_path )
         rescue Exception => e
           $logger.error("downspout | downloader | download! | Exception while renaming #{@basename} : #{e}")
           raise e
@@ -149,7 +149,7 @@ module Downspout
       end
 
       $logger.debug("downspout | downloader | download! | Started: #{@started_at.utc}, Finished: #{@finished_at.utc}, Duration: #{duration}")
-      
+
       return downloaded
     end
 
@@ -162,33 +162,47 @@ module Downspout
       end
     end
 
-    def net_ftp_download
-      $logger.debug("downspout | downloader | net_ftp_download | Downloading #{@url} ...")
+    def get_ftp_credential
+      # look up the credentials for this FTP host, preferring the FTPS scheme
+      cred = Downspout::Config.credentials.select{|c| c.scheme == "ftps" }.select{ |c| c.host == @uri.host }.first
 
-      # look up the credentials for this host
-      cred = Downspout::Config.credentials.select{|c| c.scheme == 'ftp' }.select{ |c| c.host == @uri.host }.first
+      unless cred
+        cred = Downspout::Config.credentials.select{|c| c.scheme =~ /ftp/ }.select{ |c| c.host == @uri.host }.first
+      end
 
-      if cred.nil? then
-        $logger.warn("downspout | downloader | net_ftp_download | No established credentials found for '#{@uri.host}'.")
+      if cred then
+        $logger.debug("downspout | downloader | get_ftp_credential | Loaded credentials for #{cred.host} ...")
+      else
+        $logger.warn("downspout | downloader | get_ftp_credential | No established credentials found for '#{@uri.host}'.")
 
         # attempt to extract credential from the URL
         cred = Downspout::Credential.create_from_url( @url )
-      else
-        $logger.debug("downspout | downloader | net_ftp_download | Loaded credentials for #{cred.host} ...")
+
+        unless cred
+          $logger.warn("downspout | downloader | get_ftp_credential | No embedded credentials found in URL.")
+          return nil
+        end
       end
-      
+
+      $logger.debug("downspout | downloader | get_ftp_credential | Using embedded credentials found in URL with user: #{cred.user_name}.")
+      return cred
+    end
+
+    def net_ftp_download
+      $logger.debug("downspout | downloader | net_ftp_download | Downloading #{@url} ...")
+
+      cred = get_ftp_credential
+
       if cred.nil? then
-        $logger.warn("downspout | downloader | net_ftp_download | No embedded credentials found in URL.")
         # proceed anyway - slight possibility it's an un-authorized FTP account...
-      else
-        $logger.warn("downspout | downloader | net_ftp_download | Using embedded credentials found in URL with user: #{cred.user_name}.")
+        $logger.warn("downspout | downloader | net_ftp_download | Proceeding without credentials, assuming unauthorized service ...")
       end
-      
+
       begin
         ftp = Net::FTP.open( @uri.host ) do |ftp|
           ftp.login( cred.user_name, cred.pass_word ) unless cred.nil?
           ftp.passive
-          ftp.chdir( File.dirname( @uri.path ) )          
+          ftp.chdir( File.dirname( @uri.path ) )
           ftp.getbinaryfile( File.basename(@uri.path), @path )
         end
       rescue Exception => e
@@ -217,7 +231,7 @@ module Downspout
         remove_file_at_target_path
         raise dns_err
       end
-      
+
       $logger.debug("downspout | downloader | net_http_download | Response Code : #{response.code}")
 
       # populate the response headers from net/http headers...
@@ -226,18 +240,18 @@ module Downspout
         new_header_str += "#{k}: #{v}\r\n"
       end
       parse_headers_from_string!( new_header_str )
-  
+
       if ((response.code.to_i != 200) and (response.code.to_i != 202)) then
         # missing file, failed download - delete the response body [if downloaded]
         remove_file_at_target_path
         return false
       end
-    
+
       if !( File.exist?( @path ) ) then
         $logger.error("downspout | downloader | net_http_download | Missing File at download path : #{@path}")
         return false
       end
-      
+
       return true
     end
 
@@ -256,9 +270,9 @@ module Downspout
         # convert to Invalid URI as that's the more pertinent issue
         raise URI::InvalidURIError, e.to_s
       end
-      
+
       http = Net::HTTP.new( u.host, u.port )
-        
+
       if (u.scheme == "https") then
         http.use_ssl = true
         http.verify_mode = OpenSSL::SSL::VERIFY_NONE if !(Downspout::Config.ssl_verification?)
@@ -283,7 +297,7 @@ module Downspout
         @response.error!
       end
     end
-    
+
     def curb_http_download
       $logger.debug("downspout | downloader | curb_http_download | Downloading #{@url} ...")
 
@@ -293,7 +307,7 @@ module Downspout
         $logger.error("downspout | downloader | curb_http_download | Curb/Curl DNS Error | #{@uri.host}")
         raise dns_err
       end
-      
+
       $logger.debug("downspout | downloader | curb_http_download | Response Code : #{curb.response_code}")
 
       if ((curb.response_code != 200) and (curb.response_code != 202)) then
@@ -313,16 +327,16 @@ module Downspout
       # populate a 'proxy' HTTPResponse object with the Curb data...
       hr_klass = Net::HTTPResponse.send('response_class', curb.response_code.to_s)
       $logger.debug("downspout | downloader | curb_http_download | Response Type : #{hr_klass.name}")
-      
+
       @response = hr_klass.new( @response_headers["HTTP"][:version],
         curb.response_code,
         @response_headers["HTTP"][:message] )
-        
+
       if !( File.exist?( @path ) ) then
         $logger.error("downspout | downloader | curb_http_download | Missing File at download path : #{@path}")
         return false
       end
-      
+
       return true
     end
 
@@ -349,10 +363,10 @@ module Downspout
       http_hash[:version] = http_info.split(" ")[0].match("HTTP/([0-9\.]+)")[1]
       http_hash[:code] = (http_info.split("\r\n")[0].split(" ")[1]).to_i
       http_hash[:message] = http_info.split("\r\n")[0].split(" ")[2]
-      
+
       header_hash["HTTP"] = http_hash
 
-      headers[1..-1].each do |line|      
+      headers[1..-1].each do |line|
         next if line.nil? || line.empty?
         begin
           matches = line.match(/([\w\-\s]+)\:\s?(.*)/)
@@ -386,7 +400,7 @@ module Downspout
 
       $logger.debug("downspout | downloader | file_name_from_content_disposition | cd key : #{cd_key}")
       return nil if cd_key.nil?
-      
+
       if cd_key then
         disposition = @response_headers[cd_key]
         if disposition then
@@ -396,7 +410,7 @@ module Downspout
       end
 
       $logger.debug("downspout | downloader | file_name_from_content_disposition | #{file_name}")
-      return file_name      
+      return file_name
     end
 
     def file_name_from_content_type
@@ -421,11 +435,11 @@ module Downspout
       if !(my_uri.path.nil? || my_uri.path.empty? || my_uri.path == '/')
         return File.basename( my_uri.path )
       else
-        $logger.debug("downspout | downloader | basename | Bad URI path") 
+        $logger.debug("downspout | downloader | basename | Bad URI path")
         return nil
       end
     end
-    
+
   end
-  
+
 end

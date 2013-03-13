@@ -53,7 +53,7 @@ module Downspout
     begin
       # remove user/password prefix if provided
       clean_url = self.extract_credentials_from_url!( url_string )
-  
+
       uri = URI.parse( clean_url )
     rescue URI::InvalidURIError
       $logger.warn("downspout | viable_url? | The format of the url is not valid : #{url_string}")
@@ -88,6 +88,10 @@ module Downspout
       return true
     when "URI::FTP"
       return true
+    when "FTPS"
+      return true
+    when "URI::FTPS"
+      return true
     else
       $logger.warn("downspout | supported_protocol? | #{protocol_string} is not supported by Downspout.")
     end
@@ -100,7 +104,7 @@ module Downspout
   def self.supported_protocols
     return ["HTTP", "HTTPS", "FTP"]
   end
-  
+
   def self.extract_credentials_from_url!( some_url )
 
     begin

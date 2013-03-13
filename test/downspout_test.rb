@@ -10,8 +10,9 @@ class DownspoutTest < Test::Unit::TestCase
 
     $test_ws ||= WEBrick::HTTPServer.new(:Port => 8899,
      :DocumentRoot => @test_ws_root,
-#     :Logger => Log.new(nil, BasicLog::WARN), # TODO : Use Log/BasicLog from WEBrick to reduce spam in tests
-     :Logger => $logger,
+# TODO : Use Log/BasicLog from WEBrick to reduce spam in tests
+#     :Logger => Log.new(nil, BasicLog::WARN),
+:Logger => $logger,
      :AccessLog => [])
 
 
@@ -23,7 +24,7 @@ class DownspoutTest < Test::Unit::TestCase
       num = req.query['n'].to_i
 
       if num > 1 then
-        resp.set_redirect( HTTPStatus::MovedPermanently, "/deep/?n=#{num - 1}") 
+        resp.set_redirect( HTTPStatus::MovedPermanently, "/deep/?n=#{num - 1}")
       else
         resp.set_redirect( HTTPStatus::MovedPermanently, '/READ_ME.rdoc')
       end
@@ -101,7 +102,7 @@ class DownspoutTest < Test::Unit::TestCase
         assert_equal 2, Downspout::Config.max_redirects
 
         too_deep_url = "http://127.0.0.1:8899/deep/?n=3&test=no-curb"
-  
+
         assert_raise Downspout::ExcessiveRedirects do
           dl = Downspout.fetch_url( too_deep_url )
         end
@@ -140,7 +141,7 @@ class DownspoutTest < Test::Unit::TestCase
   should "download to custom path" do
     gfx_path = File.join( Test::App.root, "tmp", "download-test", "image.png" )
     FileUtils.mkdir_p( File.dirname( gfx_path ) )
-    
+
     dl = Downspout.download_url_to_path( $test_image_url, gfx_path )
   end
 
