@@ -1,4 +1,4 @@
-require 'rubygems'
+#require 'rubygems'
 
 # common dependencies
 require 'fileutils'
@@ -8,7 +8,9 @@ require 'net/https'
 require 'net/ftp'
 
 # add this directory to the path...
-$LOAD_PATH.unshift(File.dirname(__FILE__))
+#$LOAD_PATH.unshift(File.dirname(__FILE__))
+
+require "downspout/version"
 
 # customized logger
 require 'downspout/logger'
