@@ -20,6 +20,8 @@ Gem::Specification.new do |gem|
 
   gem.version       = Downspout::VERSION
 
+  gem.add_development_dependency "rake", ">= 0.9.6"
+  gem.add_development_dependency "rdoc", ">= 2.4.2"
   gem.add_development_dependency "rcov", ">= 0.9.9"
   gem.add_development_dependency "shoulda", ">= 2.11.3"
   gem.add_development_dependency "mocha", ">= 0.9.12"
