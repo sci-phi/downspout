@@ -21,12 +21,12 @@ class DownspoutTest < Test::Unit::TestCase
       end
 
       should "respond to fetch_url" do
-        assert Downspout.respond_to?(:download_url_to_path)
+        assert Downspout.respond_to?(:fetch_url)
       end
     end
-    
+
     context "protocols" do
-      
+
       should "not support SFTP" do
         assert !( Downspout.supported_protocol?( "sftp" ) )
       end
@@ -38,7 +38,7 @@ class DownspoutTest < Test::Unit::TestCase
       should "not support SCP" do
         assert !( Downspout.supported_protocol?( "scp" ) )
       end
-      
+
       should "support all secret herbs and spices" do
         assert_not_nil Downspout.supported_protocols
         assert_equal Array, Downspout.supported_protocols.class
@@ -86,8 +86,8 @@ class DownspoutTest < Test::Unit::TestCase
           assert !( Downspout.viable_url?( "sftp://host.domain.tld/resource/file.format" ) )
         end
 
-        should "be rejected with FTPS protocol" do
-          assert !( Downspout.viable_url?( "ftps://host.domain.tld/resource/file.format" ) )
+        should "be accepted with FTPS protocol" do
+          assert Downspout.viable_url?( "ftps://host.domain.tld/resource/file.format" )
         end
 
       end
@@ -115,7 +115,7 @@ class DownspoutTest < Test::Unit::TestCase
 
         should "be accepted with FTP protocol containing user & password" do
           num = Downspout::Config.credentials.size
-          
+
           assert Downspout.viable_url?( "ftp://uzer:passw0rd@host.domain.tld/resource/file.format" )
 
           assert_equal num + 1, Downspout::Config.credentials.size
@@ -135,6 +135,6 @@ class DownspoutTest < Test::Unit::TestCase
       assert_equal URI::parse( test_url ).host, URI::parse( new_url ).host
       assert_equal URI::parse( test_url ).path, URI::parse( new_url ).path
     end
-    
+
   end
 end
