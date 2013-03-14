@@ -1,5 +1,5 @@
 module Downspout
-# The object returned by a call to fetch_url() or download_url_to_disk().
+  # The object returned by a call to fetch_url()
   class Downloader < Base
 
     # returns the path to the downloaded file

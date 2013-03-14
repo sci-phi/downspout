@@ -7,9 +7,6 @@ require 'net/http'
 require 'net/https'
 require 'net/ftp'
 
-# add this directory to the path...
-#$LOAD_PATH.unshift(File.dirname(__FILE__))
-
 # customized logger
 require 'downspout/logger'
 

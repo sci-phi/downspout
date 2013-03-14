@@ -21,7 +21,7 @@ class DownspoutTest < Test::Unit::TestCase
       end
 
       should "respond to fetch_url" do
-        assert Downspout.respond_to?(:download_url_to_path)
+        assert Downspout.respond_to?(:fetch_url)
       end
     end
 
