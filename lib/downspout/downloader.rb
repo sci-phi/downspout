@@ -347,7 +347,7 @@ module Downspout
       return nil if (matches.class == Array) && (matches.last.nil?)
 
       result = matches.last.first.strip
-      $logger.error("downspout | downloader | curb_last_location | #{result}")
+      $logger.debug("downspout | downloader | curb_last_location | #{result}")
       return result
     end
 
