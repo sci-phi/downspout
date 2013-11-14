@@ -164,10 +164,10 @@ module Downspout
 
     def get_ftp_credential
       # look up the credentials for this FTP host, preferring the FTPS scheme
-      cred = Downspout::Config.credentials.select{|c| c.scheme == "ftps" }.select{ |c| c.host == @uri.host }.first
+      cred = Downspout::Config.credentials.select{|c| c.scheme == "ftps" }.select{ |c| c.host == @uri.host.downcase }.first
 
       unless cred
-        cred = Downspout::Config.credentials.select{|c| c.scheme =~ /ftp/ }.select{ |c| c.host == @uri.host }.first
+        cred = Downspout::Config.credentials.select{|c| c.scheme =~ /ftp/ }.select{ |c| c.host == @uri.host.downcase }.first
       end
 
       if cred then

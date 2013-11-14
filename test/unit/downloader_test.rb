@@ -290,4 +290,17 @@ Accept-Ranges: bytes"
     end
   end
 
+  should "select credential regardless of case of HOST" do
+    Downspout::Config.add_credential( :scheme => 'ftp', 
+      :host => "down-case.capitalized-domain.net",
+      :user_name => "better-tester",
+      :pass_word => "S3v3nT7"
+      )
+
+    test_url = "ftp://down-case.CAPITALIZED-DOMAIN.net/path/to/no-where.xls"
+    
+    @obj = Downspout::Downloader.new( :url => test_url )
+    assert_not_nil @obj.send('get_ftp_credential')
+  end
+  
 end

@@ -21,3 +21,5 @@ rdoc/**/*
 bin
 coverage
 vendor
+config
+.ruby-version
