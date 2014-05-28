@@ -21,6 +21,13 @@ end
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
+begin
+  require 'simplecov'
+  SimpleCov.start
+rescue LoadError
+  puts "Coverage disabled, enable by installing 'simplecov'"
+end
+
 class Test::Unit::TestCase
 end
 
