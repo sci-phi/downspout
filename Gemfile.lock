@@ -19,7 +19,6 @@ GEM
       metaclass (~> 0.0.1)
     multi_json (1.6.1)
     rake (10.0.3)
-    rcov (1.0.0)
     rdoc (4.0.0)
       json (~> 1.4)
     shoulda (3.3.2)
@@ -38,6 +37,5 @@ DEPENDENCIES
   downspout!
   mocha (>= 0.9.12)
   rake (>= 0.9.6)
-  rcov (>= 0.9.9)
   rdoc (>= 2.4.2)
   shoulda (>= 2.11.3)
