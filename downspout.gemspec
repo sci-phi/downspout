@@ -25,5 +25,5 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency "shoulda", ">= 2.11.3"
   gem.add_development_dependency "mocha", ">= 0.9.12"
   gem.add_development_dependency "curb", ">= 0.7.15"
-  gem.add_development_dependency "simplecov"
+  gem.add_development_dependency "simplecov", "~> 0.7.1"
 end
