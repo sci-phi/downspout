@@ -1,6 +1,6 @@
 = Downspout
 
-Downspout is an easy-to-use ruby library for downloading files from URLs, supporting both HTTP & FTP protocols. 
+Downspout is an easy-to-use ruby library for downloading files from URLs, supporting both HTTP & FTP protocols.
 
 = Examples
 == HTTP
@@ -39,10 +39,10 @@ Downspout also supports FTP, but that usually requires authorization, so you sho
     :pass_word => "pAzw0rd",
     :scheme => 'ftp'
     )
-              
+
   dl = Downspout.fetch_url("ftp://ftp-host.domain.tld/folder/path/archive.zip")
 
-  dl.path  
+  dl.path
   => "/tmp/downloads/downspout-20110203-59843-109cmu0-7/archive.zip"
 
 Downspout will now attempt to create a credential on the fly, in the case where user info is embedded in the FTP URL, as in :
@@ -62,8 +62,8 @@ By default, files are stored in a "downloads" directory under "/tmp" but this ca
 
 
   Downspout::Config.tmp_dir = "/home/luser/downloads/"
-  
-You should clean up this folder periodically, by calling 
+
+You should clean up this folder periodically, by calling
 
   Downspout.clean_download_dir( minutes )
 
@@ -71,7 +71,7 @@ which takes an integer for how many minutes old a file should be in order to be 
 
 
 == Contributing to downspout
- 
+
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
 * Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it
 * Fork the project
@@ -82,7 +82,7 @@ which takes an integer for how many minutes old a file should be in order to be 
 
 == Copyright
 
-Copyright (c) 2011 Phi.Sanders. See LICENSE.txt for further details.
+Copyright (c) 2011 - 2014 Phi.Sanders. See LICENSE.txt for further details.
 
 == Thanks
 
