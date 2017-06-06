@@ -98,13 +98,13 @@ class ConfigTest < Test::Unit::TestCase
         should "add FTP Credential" do
           assert_equal 0, Downspout::Config.credentials.size
 
-          ftp_url = "ftp://ftp-intake.vitalbook.com/hammer.rb"
+          ftp_url = "ftp://ftp-host.domain.com/file_name.rb"
           ftp_host = URI.parse( ftp_url ).host
           
           Downspout::Config.add_credential( :scheme => 'ftp', 
             :host => ftp_host,
-            :user_name => "deploy",
-            :pass_word => "m@keitRUUN!"
+            :user_name => "YOUR-USER-NAME",
+            :pass_word => "YOUR-PASSWORD-HERE"
             )
 
           assert_equal 1, Downspout::Config.credentials.size
